@@ -1,0 +1,462 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>reveal.js</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/moon.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section id="title">
+            <section>
+                <h2>Einführung in</h2>
+                <img src="lib/img/vertical.png" style="background: none;border: none; box-shadow: none">
+            </section>
+        </section>
+
+        <section>
+            <h2>Vagrant <span style="color: #2480c2">vs</span> Docker</h2>
+            <aside class="notes">
+                <li>Vollständiges OS in VM</li>
+                <li>Schechtere Performance durch Hypervisor + OS</li>
+                <li>Docker Toolbox ist eine VM worin Docker läuft</li>
+                <li>Bei Windows muss Hyper-V verwendet werden (deaktiviert virtualbox)</li>
+                <li>Mac benutzt Hyper Kit anstatt Virtual box</li>
+                <li>Docker Linux teilt sich den Kernel</li>
+            </aside>
+        </section>
+        <section>
+            <img src="lib/img/docker-vs-vagrant.png" alt="">
+            <aside class="notes">
+                <li>Vollständiges OS in VM</li>
+                <li>Schechtere Performance durch Hypervisor + OS</li>
+                <li>Docker Toolbox ist eine VM worin Docker läuft</li>
+                <li>Bei Windows muss Hyper-V verwendet werden (deaktiviert virtualbox)</li>
+                <li>Mac benutzt Hyper Kit anstatt Virtual box</li>
+                <li>Docker Linux teilt sich den Kernel</li>
+            </aside>
+        </section>
+        <section>
+            <h2>Docker<span style="color: #2480c2">file</span></h2>
+        </section>
+        <section>
+            <pre class="stretch">
+                <code class="dockerfile " data-trim style="font-size: 60%">
+FROM php:7.0-apache
+MAINTAINER Steven Zemelka &lt;hello@klizzy.com&gt;
+
+RUN apt-get update \
+ && apt-get install -y vim git curl zsh
+
+# Installing Composer
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+ && php composer-setup.php \
+ && php -r "unlink('composer-setup.php');" \
+ && mv composer.phar /usr/local/bin/composer \
+ && chmod +x /usr/local/bin/composer
+
+COPY ./www/* /var/www/html/
+
+WORKDIR /var/www/html/
+RUN composer install
+            </code>
+            </pre>
+            <aside class="notes">
+                <li>Erbt von php image</li>
+                <li>Pakete installieren</li>
+                <li>kopiert files von /www/ in das image</li>
+                <li>wenn der container gestartet wird, sind die Dateien bereits vorhaden</li>
+            </aside>
+        </section>
+        <section>
+            <img src="lib/img/build.png" style="background: none;border: none; box-shadow: none">
+            <aside class="notes">
+                <li>Aufteilung eines Files in kleinere Parts für downloads besser</li>
+                <li>Besser für das Netzwerk</li>
+                <li>Einzelne Steps werden ausgeführt</li>
+                <li>Bei Fehler im build kommen vorige Schritte aus dem cache</li>
+            </aside>
+        </section>
+        <section>
+            <h2>
+                <span class="fragment fade-in-then-semi-out">Image<span style="color: #2480c2">..</span></span>
+                <span class="fragment fade-in-then-semi-out">Container<span style="color: #2480c2">..</span></span>
+            </h2>
+            <img style="background: none;border: none; box-shadow: none" class="fragment fade" src="https://media.giphy.com/media/aZ3LDBs1ExsE8/giphy.gif" alt="">
+            <aside class="notes">
+                <li>
+                    Image... container.. hä?
+                </li>
+            </aside>
+        </section>
+
+        <section>
+            <blockquote>
+                &ldquo;An instance of an image is called a container.&rdquo;
+            </blockquote>
+            <aside class="notes">
+                <li>Eine Instanz eines Images ist ein Container</li>
+            </aside>
+        </section>
+        <section>
+            <h2>
+                <span class="fragment fade-in-then-out">🐳</span>
+                <span class="fragment fade-in-then-out">📄</span>
+                <span class="fragment  fade-up">🍰</span>
+            </h2>
+            <aside class="notes">
+                <li>Dockerfile = Image = Summe aller Layer (jeder Docker-Command).</li>
+                <li>Image = Rezept, welches alle benötigten Schritte für ein Kuchen beeinhaltet</li>
+                <li>Rezept -> X Kuchen</li>
+                <li>Entwickler metapher: Image = Klasse, Container = Instanz einer Klasse</li>
+            </aside>
+        </section>
+        <section>
+            <section>
+                <h2>Wie <span style="color: #2480c2">starte</span> ich einen Container?</h2>
+                <pre class="fragment fade-in-then-out" style="box-shadow: none">
+                <code>docker run --name klizzy_php_container -d -p 8080:80
+klizzy/php-base:7.2
+                </code>
+            </pre>
+                <aside class="notes">
+                    <li>-d = detach = Hintergrund</li>
+                    <li>dockerhub Benutzername/Imagename</li>
+                    <li>Versionen können mit Tag gesteuert werden</li>
+                    <li>Name muss einzigartig sein</li>
+                </aside>
+            </section>
+            <section>
+                <p>PHP/Apache, MySQL <span style="color: #2480c2">&amp;</span> SSH</p>
+                <pre class="" style="box-shadow: none">
+                <code>docker run --name devEnv -d -p 8080:80 -p 2222:22 -p 3336:3306
+ikswolosewsxn/ubuntu-apache-mysql:5.7
+                </code>
+            </pre>
+                <aside class="notes">
+                    <li>Der "real" docker way wäre ein Container pro Prozess</li>
+                    <li>Grobere Trennung jedoch sinnvoller</li>
+                    <li>Keine Standard Ports belegen (80, 3306 und 22)</li>
+                    <li>Alles befindet sich in einem Container</li>
+                </aside>
+            </section>
+        </section>
+
+        <section>
+            <h2><span style="color: red">Error</span> - port already used!</h2>
+            <aside class="notes">
+                <li>Irgendwann stolpert man über diesen Fehler</li>
+            </aside>
+        </section>
+        <section>
+            <img data-src="https://media.giphy.com/media/k61nOBRRBMxva/giphy.gif" style="background: none;border: none; box-shadow: none">
+            <aside class="notes">
+                <li>Statt sich zu beschweren, dass das Setup nicht läuft, kann man es mit den Infos selbst beheben.</li>
+                <li>Es folgen übliche Fehler und deren Lösungen</li>
+            </aside>
+        </section>
+        <section>
+            <h2>Docker <span style="color: #2480c2">ps</span></h2>
+            <img src="lib/img/docker-ps.png" style="background: none;border: none; box-shadow: none">
+            <aside class="notes">
+                <li>Verwenden um belegte Ports zu überprüfen</li>
+                <li>container Name, Status und Image</li>
+            </aside>
+        </section>
+        <section>
+            <h2 class="fragment fade-up">Docker <span style="color: #2480c2">ps</span></h2>
+            <img class="fragment fade-up" src="lib/img/nothing-running.png" style="background: none;border: none; box-shadow: none">
+            <aside class="notes">
+                <li>Weil ihr den Talk gesehen habt, wisst ihr das ihr Docker ps verwenden sollt</li>
+                <li>diese Ausgabe bedeutet: es läuft nix</li>
+            </aside>
+        </section>
+        <section>
+
+        <h2>
+            <span class="">😑</span>
+            <aside class="notes">
+                <li>Aber wie kann der Port belegt sein, wenn nix läuft?</li>
+            </aside>
+        </h2>
+        </section>
+
+        <section>
+            <pre style="background: none;border: none; box-shadow: none">
+                <code class="">
+                    sudo lsof -i -n -P | grep :80
+                </code>
+            </pre>
+            <aside class="notes">
+                <li>Bei guten Betriebssystemen kann man damit den belegten Port anzeigen</li>
+                <li>Tritt "leider" hauptsächlich auf Mac auf, da php/apache installiert und aktiv ist</li>
+                <li>"Leider" ist relativ, da es gut ist, dass es installiert ist</li>
+            </aside>
+        </section>
+        <section>
+            <pre style="background: none;border: none; box-shadow: none">
+                <code class="">
+                    netstat -ab
+                </code>
+            </pre>
+        </section>
+        <section>
+            <img src="lib/img/win.png" style="background: none;border: none; box-shadow: none; width: 50%;">
+            <aside class="notes">
+                <li>Problem mit Monatlicher PW Änderung und Docker Shared Folder.</li>
+                <li>Wenn das PW Abgelaufen ist, müssen die Shared Folder erneut freigebeben werden. Andernfalls laufen die Volumes nicht mehr.</li>
+            </aside>
+        </section>
+        <section>
+            <h2>Docker <span class="" style="color: #2480c2">exec</span></h2>
+            <img class="stretch " src="lib/img/docker-exec.png" style="background: none;border: none; box-shadow: none; width: 50%;">
+            <aside class="notes">
+                <li>falls man sich mit einen container verbinden will</li>
+                <li>einzelne commands ausführen</li>
+                <li>oder shell permanent öffnen</li>
+                <li>-i interactive</li>
+                <li>-t pseudo-TTY</li>
+            </aside>
+        </section>
+        <section>
+            <h2>Volumes</h2>
+            <pre style="background: none;border: none; box-shadow: none">
+                <code>
+docker run --name klizzy_php_container -d -p 8080:80
+-v ./www:/var/www/html klizzy/php-base:7.2
+                </code>
+            </pre>
+            <aside class="notes">
+                <li>Aber wie kommen die Dateien rein?</li>
+                <li>Volume from Host -> Container</li>
+                <li>Container -> Container auch möglich</li>
+                <li>Probleme bei non-linux</li>
+                <li>docker-sync möglich</li>
+                <li>alternativ über sftp/ssh</li>
+            </aside>
+        </section>
+        <section>
+            <h2>docker<span class="fragment fade-up" style="color: #2480c2">-compose</span></h2>
+            <aside class="notes">
+                <li>alle neuen Projekte laufen damit</li>
+                <li>ist bei docker for win/mac dabei</li>
+                <li>Verwaltung für Docker Container</li>
+                <li>bei Verwaltug von mehreren containern besser</li>
+            </aside>
+        </section>
+        <section>
+            <pre class="" style="background: none;border: none; box-shadow: none">
+                <code class="docker-compose" style="font-size: 80%; line-height: 18px">#docker-compose.yml
+version: '3.3'
+services:
+    php:
+        image: klizzy/php-base:7.2
+        container_name: klizzy_php_container
+        ports:
+            - "8080:80"
+        volumes:
+            - ./www:/var/www/html
+        depends_on:
+            - db
+    db:
+        container_name: klizzy_db_container
+        image: mysql:5.7
+        ports:
+            - "3336:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root123
+        volumes:
+            - ./.dump/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+                </code>
+            </pre>
+            <aside class="notes">
+                - Container Volumes
+                - abhängigkeit - depens on
+                - argumente übergeben, oder aus env auslesen
+                - mysql dump wird beim start eingespielt
+                - wird nicht verwendet, weil es lange dauern kann
+                - container is up, aber db initialisiert noch
+            </aside>
+        </section>
+        <!--<section>-->
+            <!--<h2>docker <span class="fragment fade-up" style="color: #2480c2"> run...?</span></h2>-->
+            <!--<aside class="notes">-->
+                <!-- - also wie vorher gesehen mit docker run starten?-->
+                <!-- - docker run nur für einzelne container-->
+            <!--</aside>-->
+        <!--</section>-->
+        <section>
+            <pre class=" fragmented fade-in-then-out" style="background: none;border: none; box-shadow: none">
+                <code class="stretch docker-compose" style="font-size: 80%; line-height: 18px">#docker-compose.yml
+version: '3.3'
+services:
+    php:
+        image: klizzy/php-base:7.2
+        container_name: klizzy_php_container
+        ports:
+            - "8080:80"
+        volumes:
+            - ./www:/var/www/html
+        depends_on:
+            - db
+    db:
+        container_name: klizzy_db_container
+        image: mysql:5.7
+        ports:
+            - "3336:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root123
+        volumes:
+            - ./.dump/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    redis:
+        container_name: klizzy_redis
+        image: redis:3.2.11
+        restart: on-failure
+        command: redis-server --appendonly yes
+                </code>
+
+            </pre>
+            <aside class="notes">
+                <li>
+                    Stärke von dc sichtbar, da einfach erweiterbar
+                </li>
+                <li>
+                    redis ist komplett losgelöst
+                </li>
+                <li>Hosts werden mit container namen angegeben localhost = klizzy_db_container</li>
+            </aside>
+        </section>
+        <section>
+        <h2>
+            docker-compose <span class="fragment fade-up" style="color: #2480c2"> up -d</span>
+        </h2>
+        <aside class="notes">
+            - Wer hat aufgepasst und weiß was -d bedeutet?
+            - up = erstellen und starten
+            - start = starten
+        </aside>
+        </section>
+        <section>
+            <h2>
+                docker-compose <span style="color: #2480c2"> stop</span>
+            </h2>
+        </section>
+        <section>
+<h2>Docker <span class="fragment fade-up" style="color: #2480c2"> Hub</span></h2>
+        </section>
+        <section>
+            <img src="lib/img/docker-hub.png" style="background: none;border: none; box-shadow: none" class="stretch">
+            <aside class="notes">
+                - docker images werden hier gehostet
+                - public kostenlos / private 1 image kostenlos
+            </aside>
+        </section>
+        <section>
+            <img src="lib/img/drake.jpg" style="background: none;border: none; box-shadow: none">
+            <aside class="notes">
+                - erstaunlich viele Entwickler bevorzugen eine GUI
+            </aside>
+        </section>
+        <section>
+            <video data-video-autostart class="stretch" data-autoplay src="lib/img/kitematic.mov">
+            </video>
+            <aside class="notes">
+                - docker hub
+                - ports / env / volumes
+                - controlls
+                - lieber CLI verwenden, dann bleibt mehr hängen
+            </aside>
+        </section>
+        <section>
+            <section>
+                <h1>The End</h1>
+                <p>Fragen?</p>
+            </section>
+        </section>
+        <!--Fallback Slides-->
+        <section>
+            <img src="lib/img/vagrant.png" alt="">
+            <aside class="notes">
+                <li>Code / Provisionierung separat</li>
+                <li>Code ist somit Unabhängig von der Umgebung</li>
+                <li>Provisionierung (Puppet, chef oder Ansible)</li>
+            </aside>
+        </section>
+        <section>
+            <img src="lib/img/docker.png" width="750" height="auto" alt="">
+            <aside class="notes">
+                - Code + Dockerfile = Image
+                - Vom Image werden Container gestartet (Stage / Live)
+                - Code + Dockerfile ist hier eine Einheit
+            </aside>
+        </section>
+        <section>
+            <img src="lib/img/docker-2.png" alt="">
+            <aside class="notes">
+                - Bei last können mehrere Container hochgefahren werden
+                - nginx loadbalancer verteilt es auf container
+                - Netflix / Spotify fangen so last peaks ab
+            </aside>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+
+<script>
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+        // More info https://github.com/hakimel/reveal.js#dependencies
+        dependencies: [
+            {
+                src: 'lib/js/classList.js', condition: function () {
+                    return !document.body.classList;
+                }
+            },
+            {
+                src: 'plugin/markdown/marked.js', condition: function () {
+                    return !!document.querySelector('[data-markdown]');
+                }
+            },
+            {
+                src: 'plugin/markdown/markdown.js', condition: function () {
+                    return !!document.querySelector('[data-markdown]');
+                }
+            },
+            {
+                src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+                    hljs.initHighlightingOnLoad();
+                }
+            },
+            {src: 'plugin/search/search.js', async: true},
+            {src: 'plugin/zoom-js/zoom.js', async: true},
+            {src: 'plugin/notes/notes.js', async: true}
+        ]
+    });
+</script>
+</body>
+</html>
